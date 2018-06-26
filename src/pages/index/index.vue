@@ -22,6 +22,8 @@
 		<!-- 弹框 -->
 		<confirm v-if="showConfirm" :close="closeConfirm"></confirm><!-- 弹出回答错误提示 -->
 		<rule v-if="showRules" :click="closeRules"></rule><!-- 弹出规则框 -->
+		<!-- <wawa></wawa> -->  <!-- 弹出3秒抽取娃娃提示 -->
+		<!-- <share></share> --> <!-- 分享弹框 -->
 
 	</div>
 </template>
@@ -38,12 +40,15 @@
 			}
 		},
 		components: {
-			confirm,
 			rule
 		},
 		methods: {
 			start(){
 				const url="../start/main"
+				wx.navigateTo({ url })
+			},
+			share(){
+				const url="../share/main"
 				wx.navigateTo({ url })
 			},
 			clickRules(){
