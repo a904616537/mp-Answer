@@ -2,12 +2,16 @@
 	<div class="confirm">
 		<div class="mask">
 			<div class="inner">
-				<div class="confirm-title">回答错误～</div>
-				<div class="red-text" v-if="chance ? false : true">你已经没有机会挑战了</div>
+				<div class="confirm-title" v-if="chance">回答错误～</div>
+				<div class="red-text" v-else>你已经没有机会挑战了</div>
 				<p>转发到不同群<br>即可马上复活并继续答题</p>
-				<img src="/static/images/forward.png" alt="点击转发到不同群" class="forward-img" @click="share">
+				<button
+				@click="share"
+				open-type="share">
+					<img src="/static/images/forward.png" alt="点击转发到不同群" class="forward-img">
+				</button>
+				<div class="red-text one-more" @click="oneMore" v-if="chance">再来一次</div>
 				<div class="close-btn" @click="close">X</div>
-				<div class="red-text one-more" @click="oneMore" v-if="chance ? true : false">再来一次</div>
 			</div>
 		</div>
 	</div>
@@ -17,27 +21,38 @@
 	export default{
 		data() {
 			return {
-				chance : true
 			}
 		},
 		props: {
+			chance : {
+				type    : Boolean,
+				default : true
+			},
 			close: {
-				type: Function,
-				default: () => console.log('clost btn')
+				type    : Function,
+				default : () => console.log('clost btn')
 			},
 			share: {
-				type: Function,
-				default: () => console.log('share btn')
+				type    : Function,
+				default : () => console.log('share btn')
 			},
 			oneMore: {
-				type: Function,
-				default: () => console.log('再来一次!')
+				type    : Function,
+				default : () => console.log('再来一次!')
 			}
 		}
 	}
 </script>
 
 <style>
+	button {
+		border     : none;
+		background : none;
+	}
+	button::after {
+	  border: none;
+	} 
+
 	.confirm{
 		width: 100%;
 		height: 100%;
