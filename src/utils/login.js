@@ -40,6 +40,7 @@ export default {
 				url     : `${Vue.setting.api}mobile/wx_app`,
 				data    : data,
 				success : (result, req) => {
+					console.log('user detail', result.data.user)
 	            	store.commit('user/detail', {user : result.data.user, token : result.data.login.token});
 	            	resolve();
 	            }
@@ -61,9 +62,9 @@ export default {
 	            					const {encryptedData, iv} = res;
 
 		                        	const pc = new WxCrypt(Vue.setting.appid, session_key);
-		                        	if(store.state.User.share) {
-		                        		this.share = pc.decryptData(store.state.User.share.encryptedData, store.state.User.share.iv)
-		                        	}
+		                        	// if(store.state.User.share) {
+		                        	// 	this.share = pc.decryptData(store.state.User.share.encryptedData, store.state.User.share.iv)
+		                        	// }
 		                        	
 						            const data = pc.decryptData(encryptedData , iv)
 						            if(data) {
@@ -71,10 +72,10 @@ export default {
 		                            	this.onLogin(data);
 		                            	this.onWXApp(data)
 		                            	.then(() => {
-		                            		console.log('share', this.share)
-		                            		if(this.share) {
-			                        			this.onRequstShare(this.share.openGId);
-			                        		}
+		                           //  		console.log('share', this.share)
+		                           //  		if(this.share) {
+			                        		// 	this.onRequstShare(this.share.openGId);
+			                        		// }
 		                            		// 登陆成功后获取用户详细数据
 		                            		resolve(data)
 		                            	})
@@ -143,12 +144,14 @@ export default {
 	        });
 	    });
 	},
-	onRequstShare(gid) {
-		const data = {
-			team_uid : gid,
-			uid        : store.state.User.share_uid,
-			token      : store.state.User.token,
-			type       : 2
+	onRequstShare(res, next) {
+		const pc    = new WxCrypt(Vue.setting.appid, store.state.User.session_key);
+		const share = pc.decryptData(res.encryptedData, res.iv)
+		const data  = {
+			team_uid : share.openGId,
+			uid      : store.state.User.share_uid || store.state.User.detail.uid,
+			token    : store.state.User.token,
+			type     : 2
 		}
 		console.log('requst share data', data);
 		wx.request({
@@ -156,6 +159,7 @@ export default {
 			data    : data,
 			success : (result, req) => {
 				console.log('result share_team_get', result)
+				if(next) next()
             }
         })
 	}

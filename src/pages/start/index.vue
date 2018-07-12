@@ -13,7 +13,13 @@
 		<div class="content">
 			<div class="title">{{question.question}}</div>
 			<div class="answer">
-				<div v-for="(item, key) in question.answer" :key="key" class="answer-btn" @click="onNext(item.key)">{{item.value}}</div>
+				<div
+				v-for="(item, key) in question.answer"
+				:key="key"
+				class="answer-btn"
+				:style="'background-color : '+(item.bg?item.bg:'#1D9881') + ';'"
+				@click="onNext(item.key, key)"
+				>{{item.value}}</div>
 			</div>
 		</div>
 
@@ -30,14 +36,35 @@
 </template>
 
 <script>
-	import Vue from 'vue';
+	import Vue        from 'vue';
+	import login_help from '@/utils/login'
 	const {dispatch, getters, state} = Vue.store;
 	export default{
 		onShareAppMessage(res) {
+			const self = this;
+			let num = Math.floor(Math.random()*4);
+			if(num === 0 || num === 4) num = 1;
 			return {
 				title    : `【${state.User.user.nickName} @你】帮我答对这题，就能抓娃娃啦！`,
 				path     : `/pages/index/main?uid=${state.User.detail.uid}`,
-				// imageUrl : 
+				imageUrl : `/static/images/template${num}.jpg`,
+				success(res) {
+					console.log('转发成功回调', res)
+					if(res.shareTickets && res.shareTickets.length > 0) {
+
+						wx.getShareInfo({
+			                shareTicket : res.shareTickets[0],
+			                success     : (res) => {
+			                	login_help.onRequstShare(res, () => {
+			                		self.share = true;
+			                		self.onreduceNum();
+			                	})
+			                },
+			                fail        : (res) => { console.log('error', res) },
+			                complete    : (res) => { console.log('complete') }
+			            })
+					}
+				},
 			}
 	    },
 		data() {
@@ -49,7 +76,8 @@
 				showSuccess : false,
 				number      : 0,
 				question    : {},
-				is_over     : false
+				is_over     : false,
+				share       : false
 			}
 		},
 		computed: {
@@ -67,7 +95,7 @@
 	        }
 	    },
 		onShow() {
-			this.onInitQuestion();
+			if(!this.share) this.onInitQuestion();
 		},
 		onUnload() {
 			if(this.timer) this.onOver();
@@ -76,9 +104,46 @@
 			if(this.timer) this.onOver();
 		},
 		methods: {
+			onSelected(selected) {
+				const bgcolor = (typeof selected === 'undefined')?'#1D9881':(selected?'#ecdd32' : '#cf4646');
+				return bgcolor;
+			},
+			onreduceNum(next) {
+				// 检查次数
+				if(state.Question.count <= 0) {
+					this.showConfirm = true;
+					return;
+				}
+				// 消耗次数
+				const data = {
+					token  : state.User.token,
+					type   : 2
+				}
+				wx.request({
+					url     : `${Vue.setting.api}mobile/reduceNum`,
+					data    : data,
+					success : (result, req) => {
+						console.log('消耗答题次数', result)
+						
+						this.showConfirm = false;
+
+						// 题目回答成功，重新加载答题时间
+						this.timer = setInterval(() => {
+							if(this.time > 0){
+								this.time --;
+							}else{
+								clearInterval(this.timer);
+								this.timer = null;
+								this.showConfirm = true
+							}
+						},1000)
+						// 加载成功，开始游戏后减少一次游戏机会
+						dispatch('play');
+		            }
+		        })
+			},
 			getQuestion() {
 	        	if(this.questions) {
-	        		console.log('resert question', this.questions.get(this.number), this.number)
 	        		const question = this.questions.get(this.number);
 	        		if(question) this.question = question;
 	        		else {
@@ -156,17 +221,32 @@
 				this.time = 10;
 			},
 			// 下一题
-			onNext(key) {
+			onNext(key, index) {
+				// 上一个题没有结束前不允许点击
+				if(this.disabled) return;
+
 				this.time = 10;
-				if(key === this.question.correct || true) {
+				this.disabled = true;
+				let que = this.question.answer[index];
+				if(key === this.question.correct) {
+					que.bg = '#ecdd32';
+					this.question.answer.splice(index, 1, que);
 					// 回答正确，开始下一题
-					this.number ++;
-					this.getQuestion();
+					setTimeout(() => {
+						this.disabled = false;
+						this.number ++;
+						this.getQuestion();
+					}, 1000);
 				} else {
+					que.bg = '#cf4646';
+					this.question.answer.splice(index, 1, que);
 					// 回答错误，结束游戏
-					this.onOver();
-					this.is_over = true;
-					this.showConfirm = true;
+					setTimeout(() => {
+						this.disabled = false;
+						this.onOver();
+						this.is_over = true;
+						this.showConfirm = true;
+					}, 1000);
 				}
 			},
 			onShare() {
@@ -264,12 +344,11 @@ page{
 	margin-bottom: 40rpx;
 }
 .answer-btn{
-	background-color: #1D9881;
-	color: #e7f5fe;
-	font-size: 38rpx;
-	line-height: 100rpx;
-	margin-bottom: 20rpx;
-	text-align: center;
-	border-radius: 16rpx;
+	color         : #e7f5fe;
+	font-size     : 38rpx;
+	line-height   : 100rpx;
+	margin-bottom : 20rpx;
+	text-align    : center;
+	border-radius : 16rpx;
 }
 </style>

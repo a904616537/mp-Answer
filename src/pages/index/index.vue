@@ -8,7 +8,24 @@
 				<div class="rules" @click="clickRules">规则</div>
 			</div>
 		</div>
-		<div class="banner" :style="'background-image: url('+banner+');'"></div>
+
+		<swiper
+		style ="height : 360rpx;"
+		:autoplay="true"
+		:interval="5000"
+		:duration="1000"
+		:indicatorDots="true"
+		indicatorColor="rgba(255,255,255,.4)"
+		indicator-active-color="#fff"
+		>
+			<block v-for="(item, index) in banner" :key="index">
+
+				<swiper-item class="swiper-item">
+					<div class="banner" :style="'background-image: url('+item+');'"></div>
+			    </swiper-item>
+			</block>
+		</swiper>
+		
 		<div class="content">
 			<p>{{title}}</p>
 			<button
@@ -35,7 +52,7 @@
 
 
 		<!-- 弹框 -->
-		<confirm v-if="showConfirm" :close="closeConfirm"></confirm><!-- 弹出回答错误提示 -->
+		<confirm v-if="showConfirm" :chance="false" :close="closeConfirm"></confirm><!-- 弹出回答错误提示 -->
 		<rule v-if="showRules" :click="closeRules"></rule><!-- 弹出规则框 -->
 		<!-- <wawa /> -->
 		<!-- <wawa></wawa> -->  <!-- 弹出3秒抽取娃娃提示 -->
@@ -55,20 +72,58 @@
 			this.onInit();
 		},
 		onLoad(option){
+			wx.showShareMenu({
+				withShareTicket : true,
+				success(res) {
+					// 分享成功
+					console.log('shareMenu share success')
+					console.log('分享', res)
+				},
+				fail(res) {
+					// 分享失败
+					console.log(res)
+				}
+			})
 	        commit('user/uid', option.uid);
 	    },
 		onShareAppMessage(res) {
+			const self = this;
+			let num = Math.floor(Math.random()*4);
+			if(num === 0 || num === 4) num = 1;
 			if(this.isLogin) {
 				return {
 					title    : `【${state.User.user.nickName} @你】帮我答对这题，就能抓娃娃啦！`,
 					path     : `/pages/index/main?uid=${state.User.detail.uid}`,
-					// imageUrl : 
+					imageUrl : `/static/images/template${num}.jpg`,
+					success(res) {
+						console.log('转发成功回调', res)
+						if(res.shareTickets && res.shareTickets.length > 0) {
+
+							wx.getShareInfo({
+				                shareTicket : res.shareTickets[0],
+				                success     : (res) => {
+				                	console.log('user/share', res)
+
+				                	login_help.onRequstShare(res, () => {
+				                		console.log('self', self)
+				                		self.getQuestionNum();
+				                		self.showConfirm = false;
+				                	})
+				                },
+				                fail        : (res) => { console.log('error', res) },
+				                complete    : (res) => { console.log('complete') }
+				            })
+						}
+					},
 				}
 			} else {
 				return {
 					title    : `【抓娃娃王国 @你】帮我答对这题，就能抓娃娃啦！`,
 					path     : `/pages/index/main`,
-					// imageUrl : 
+					imageUrl : `/static/images/template${num}.jpg`,
+					success : (e) => {
+
+					}
 				}
 			}
 	    },
@@ -90,7 +145,7 @@
 	        },
 	        banner() {
 	        	const storeBanner = getters.getBanner;
-	        	return storeBanner.length > 0?storeBanner[0]:'http://c.waguo.net//static/images/shangchengtu.png';
+	        	return storeBanner.length > 0?storeBanner:['http://c.waguo.net//static/images/shangchengtu.png', 'http://c.waguo.net//static/images/shangchengtu.png'];
 	        },
 	        banner1() {
 	        	const storeBanner = getters.getBanner;
@@ -102,6 +157,12 @@
 	    },
 		methods: {
 			onreduceNum(next) {
+				// 检查次数
+				if(state.Question.count <= 0) {
+					this.showConfirm = true;
+					wx.hideLoading();
+					return;
+				}
 				// 消耗次数
 				const data = {
 					token  : state.User.token,

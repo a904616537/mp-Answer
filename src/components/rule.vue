@@ -2,7 +2,7 @@
 	<div class="rule">
 		<div class="mask">
 			<div class="inner">
-				<p>世纪杯答题赢娃娃规则:<br>答中5题即可获得抓娃娃机会<br>每天10次机会<br>转发群组可获得复活机会</p>
+				<p>世纪杯答题赢娃娃规则:<br>答中所有题目即可获得抓娃娃机会<br>每天10次机会<br>转发群组可获得复活机会</p>
 				<div class="close-btn" @click="click">X</div>
 			</div>
 		</div>
