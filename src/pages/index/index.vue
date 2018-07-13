@@ -8,6 +8,8 @@
 				<div class="rules" @click="clickRules">规则</div>
 			</div>
 		</div>
+	
+		<!-- <div class="banner" :style="'background-image: url('+banner.img+');'" @click="onContent"></div> -->
 
 		<swiper
 		style ="height : 360rpx;"
@@ -21,7 +23,7 @@
 			<block v-for="(item, index) in banner" :key="index">
 
 				<swiper-item class="swiper-item">
-					<div class="banner" :style="'background-image: url('+item+');'"></div>
+					<div class="banner" :style="'background-image: url('+item.img+');'" @click="onContent"></div>
 			    </swiper-item>
 			</block>
 		</swiper>
@@ -48,7 +50,7 @@
 				<img src="/static/images/share-btn.png" class="content-img" alt="转发到不同群，挑战次数+1">
 			</button> -->
 		</div>
-		<div class="foot" :style="'background-image: url('+banner1+');'"></div>
+		<div class="foot" :style="'background-image: url('+banner1.img+');'"></div>
 
 
 		<!-- 弹框 -->
@@ -62,10 +64,10 @@
 </template>
 
 <script>
-	import Vue             from 'vue'
-	import rule            from '@/components/rule'
-	import login_help      from '@/utils/login'
-	import {onDecryptData} from '@/utils'
+	import Vue           from 'vue'
+	import rule          from '@/components/rule'
+	import login_help    from '@/utils/login'
+	import constact_help from '@/utils/mp-contact'
 	const {dispatch, commit, getters, state} = Vue.store;
 	export default{
 		onShow() {
@@ -73,16 +75,7 @@
 		},
 		onLoad(option){
 			wx.showShareMenu({
-				withShareTicket : true,
-				success(res) {
-					// 分享成功
-					console.log('shareMenu share success')
-					console.log('分享', res)
-				},
-				fail(res) {
-					// 分享失败
-					console.log(res)
-				}
+				withShareTicket : true
 			})
 	        commit('user/uid', option.uid);
 	    },
@@ -144,18 +137,36 @@
 	        	return state.User.user
 	        },
 	        banner() {
-	        	const storeBanner = getters.getBanner;
-	        	return storeBanner.length > 0?storeBanner:['http://c.waguo.net//static/images/shangchengtu.png', 'http://c.waguo.net//static/images/shangchengtu.png'];
+	        	
+	        	const storeBanner = getters.getBanner.filter(val => val.share_key.includes('top'));
+	        	console.log('getters.getBanner', storeBanner)
+	        	return storeBanner.length > 0?storeBanner:[{img : 'http://c.waguo.net//static/images/shangchengtu.png'}];
 	        },
 	        banner1() {
-	        	const storeBanner = getters.getBanner;
-	        	return storeBanner.length > 1?storeBanner[1]:'http://c.waguo.net//static/images/shangchengtu.png';
+	        	const storeBanner = getters.getBanner.find(val => val.type.includes('5') && val.share_key.includes('bottom'));
+	        	return storeBanner?storeBanner:{img : 'http://c.waguo.net//static/images/shangchengtu.png'};
 	        },
 	        isLogin() {
 	        	return state.User.token?true:false;
 	        }
 	    },
 		methods: {
+			onContent() {
+				const msg = {
+					touser  : this.user.openId,
+					msgtype : "text",
+					content : "欢迎来到抓娃娃王国"
+				};
+				console.log('msg', msg);
+
+				constact_help.sendCustomMsg(msg)
+				.then(result => {
+					console.log('发送客服消息返回结果', result);
+				})
+				.catch(err => {
+					console.log('发送客服消息失败');
+				})
+			},
 			onreduceNum(next) {
 				// 检查次数
 				if(state.Question.count <= 0) {
@@ -351,7 +362,7 @@ button::after {
 /* bottom */
 .index .foot{
 	width           : 100%;
-	height          : 15vh;
+	height          : 16vh;
 	position        : fixed;
 	bottom          : 0;
 	background-size : cover;

@@ -7,7 +7,7 @@
 */
 
 export const getBanner = (state, getters) => {
-	return state.Banner.banner.filter(val => val.type === '2')
+	return state.Banner.banner.filter(val => val.type.includes('4'))
 }
 
 // 是否可以继续答题

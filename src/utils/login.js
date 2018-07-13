@@ -134,7 +134,6 @@ export default {
 							url     : `${Vue.setting.api}mobile/wx_code`,
 							data,
 							success : (result) => {
-								console.log('result', result)
 								resolve(result)
 							},
 							fail    : (err) => reject(error.get(503))

@@ -10,10 +10,11 @@ App.mpType = 'app'
 
 Vue.store                = store;
 Vue.setting              = {
-    api       : 'https://waguo.vip/',
-    appid     : 'wxda1fdae90e92fe0a',
-    secret    : '7e10eb9b3003db01b68b6c226c959e99',
-    socketUrl : 'ws://106.14.112.101'
+    api         : 'https://waguo.vip/',
+    content_api : 'https://shop.waguo.vip/',
+    appid       : 'wxda1fdae90e92fe0a',
+    secret      : '7e10eb9b3003db01b68b6c226c959e99',
+    socketUrl   : 'ws://106.14.112.101'
 }
 
 const app = new Vue(App)
